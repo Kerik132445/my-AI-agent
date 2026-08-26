@@ -1,6 +1,13 @@
 import os
 import glob
 import difflib
+import ctypes
+import pyautogui
+
+from comtypes import CLSCTX_ALL
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ollama import chat
 from datetime import datetime, date
 
@@ -34,6 +41,38 @@ for one_app in all_lnks:
     file_name = os.path.basename(one_app)
     app_name = os.path.splitext(file_name)[0].lower()
     clear_lnks[app_name] = one_app
+
+
+def get_volume():
+    # Инициализируем COM-поток, чтобы Windows не блокировала доступ
+    try:
+        comtypes.CoInitialize()
+    except Exception:
+        pass
+
+    # Получаем именно АКТИВНОЕ устройство вывода (по умолчанию)
+    enumerator = AudioUtilities.GetDeviceEnumerator()
+    # 0 = eRender (вывод), 0 = eConsole (устройство по умолчанию)
+    device = enumerator.GetDefaultAudioEndpoint(0, 0)
+
+    interface = device.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    return volume
+
+
+def set_volume(level: int):
+    try:
+        level = int(level)
+        volume = get_volume()
+
+        volume.SetMute(False, None)
+        target_level = max(0, min(100, level)) / 100.0
+        volume.SetMasterVolumeLevelScalar(target_level, None)
+
+        return f"Громкость установленна на {level}%."
+
+    except Exception as e:
+        return f"При установке громкости произошла ошибка {str(e)}"
 
 
 def get_time():
@@ -78,10 +117,24 @@ def open_app(name_app: str):
         return f"Не удалось запустить '{name_app}'. Ошибка: {str(e)}"
 
 
+def mute_volume():
+    """Включает или выключает звук полностью (Mute)."""
+    try:
+        volume = get_volume()
+        current_mute = volume.GetMute()
+        volume.SetMute(not current_mute, None)
+        state = "выключен" if not current_mute else "включен"
+        return f"Звук {state}."
+    except Exception as e:
+        return f"Ошибка при переключении звука: {str(e)}"
+
+
 available_tools = {
     "get_time": get_time,
     "get_date": get_date,
     "open_app": open_app,
+    "set_volume": set_volume,
+    "mute_volume": mute_volume
 }
 
 
@@ -103,6 +156,13 @@ tools_discription = [
     {
         'type': 'function',
         'function': {
+            'name': 'mute_volume',
+            'description': 'Полностью выключает или включает звук',
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
             'name': 'open_app',
             'description': 'Открывает приложение по их обычным названиям на русском и английском языке',
             'parameters': {
@@ -114,6 +174,23 @@ tools_discription = [
                     }
                 },
                 'required': ['name_app']
+            },
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'set_volume',
+            'description': 'изменяет громкость звука на нужный уровень',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'level': {
+                        'type': 'integer',
+                        'description': 'Принимает число от 1 до 100 для изменения уровня громкости'
+                    }
+                },
+                'required': ['level']
             },
         },
     }
