@@ -1,5 +1,6 @@
 import os
-from AppOpener import open as app_open
+import glob
+import difflib
 from ollama import chat
 from datetime import datetime, date
 
@@ -14,6 +15,26 @@ APP_ALIASES = {
     "калькулятор": "calc",
 }
 
+user_start = os.path.expandvars(r'%APPDATA%\Microsoft\Windows\Start Menu')
+common_start = os.path.expandvars(
+    r'%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu')
+
+search_paths = [user_start, common_start]
+
+all_lnks = []
+
+for base_path in search_paths:
+    pattern = os.path.join(base_path, '**', '*.lnk')
+    found_files = glob.glob(pattern, recursive=True)
+    all_lnks.extend(found_files)
+
+clear_lnks = {}
+
+for one_app in all_lnks:
+    file_name = os.path.basename(one_app)
+    app_name = os.path.splitext(file_name)[0].lower()
+    clear_lnks[app_name] = one_app
+
 
 def get_time():
     return datetime.now().strftime("%H:%M:%S")
@@ -23,25 +44,36 @@ def get_date():
     return date.today().strftime("%d.%m.%Y")
 
 
-def open_app(name_app):
+def open_app(name_app: str):
+    # 1. Приводим ввод к нижнему регистру и проверяем локальные алиасы
+    clean_input = name_app.strip().lower()
+    search_query = APP_ALIASES.get(clean_input, clean_input)
 
-    name_clean = name_app.strip().lower().replace('"', '').replace("'", "")
+    target_path = None
 
-    if not name_clean or name_clean.strip() in [".", "", "none"]:
-        return "Ошибка: имя приложения не указано."
+    # 2. Поиск по частичному вхождению (in)
+    for app_name, app_path in clear_lnks.items():
+        if search_query in app_name:
+            target_path = app_path
+            break
 
-    target = APP_ALIASES.get(name_clean, name_clean)
+    # 3. Нечеткий поиск через difflib, если по 'in' не нашлось
+    if not target_path:
+        matches = difflib.get_close_matches(
+            search_query, clear_lnks.keys(), n=1, cutoff=0.5
+        )
+        if matches:
+            matched_key = matches[0]
+            target_path = clear_lnks[matched_key]
 
+    # 4. Проверка: если путь так и не найден
+    if not target_path:
+        return f"Приложение '{name_app}' не найдено на ПК."
+
+    # 5. Безопасный запуск
     try:
-        os.startfile(target)
-        return f"Приложение {name_app} успешно запущено."
-    except Exception:
-        pass
-
-    try:
-        app_open(target, match_closest=True, output=False)
-        return f"приложение {name_app} успешно запущено"
-
+        os.startfile(target_path)
+        return f"Приложение '{name_app}' успешно запущено."
     except Exception as e:
         return f"Не удалось запустить '{name_app}'. Ошибка: {str(e)}"
 
@@ -78,7 +110,7 @@ tools_discription = [
                 'properties': {
                     'name_app': {
                         'type': 'string',
-                        'description': 'дискорд, телеграм, chrome, блокнот, steam и другие'
+                        'description': 'если пользователь написал название на русском языке, например "дискорд", то нужно перевести это название на английский язык, "discord"'
                     }
                 },
                 'required': ['name_app']
