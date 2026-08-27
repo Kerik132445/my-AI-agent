@@ -3,6 +3,7 @@ import glob
 import difflib
 import ctypes
 import pyautogui
+import time
 
 from comtypes import CLSCTX_ALL
 from pathlib import Path
@@ -132,7 +133,15 @@ def mute_volume():
 
 def collapse_win():
     try:
-        pyautogui.hotkey('win', 'd')
+        # VK_LWIN = 0x5B, VK_D = 0x44
+        # Зажимаем Win
+        ctypes.windll.user32.keybd_event(0x5B, 0, 0, 0)
+        # Нажимаем D
+        ctypes.windll.user32.keybd_event(0x44, 0, 0, 0)
+        time.sleep(0.05)
+        # Отпускаем D и Win
+        ctypes.windll.user32.keybd_event(0x44, 0, 2, 0)
+        ctypes.windll.user32.keybd_event(0x5B, 0, 2, 0)
         return "Все окна свернуты/развернуты"
     except Exception as e:
         return f"Ошибка при свравчивании/разворачивание окон {str(e)}"
@@ -191,7 +200,7 @@ tools_discription = [
         'type': 'function',
         'function': {
             'name': 'collapse_win',
-            'description': 'Сворачивает или разворачивает все окна',
+            'description': 'Сворачивает или разворачивает все открытые окна на рабочем столе (Win+D)',
         },
     },
     {
@@ -241,7 +250,14 @@ tools_discription = [
 messages = [
     {
         'role': 'system',
-        'content': ("Ты — Гвен, полезный ИИ-ассистент. Отвечай кратко и по делу."),
+        'content': ("Ты — Гвен, полезный ИИ-ассистент для управления ПК."
+                    "Если пользователь просит выполнить несколько действий подряд (например, 'сверни окна и открой стим'), ты ДОЛЖНА вызвать все соответствующие функции (tools) последовательно. "
+                    "Отвечай кратко и по делу."
+                    "КРИТИЧЕСКОЕ ПРАВИЛО: Если пользователь просит выполнить 2 и более действий "
+                    "(например: 'сверни окна и открой стим'), ты ОБЯЗАНА вернуть сразу список вызовов функций.\n"
+                    "Пример ответа:\n"
+                    '[{"name": "collapse_win", "arguments": {}}, {"name": "open_app", "arguments": {"name_app": "steam"}}]'
+                    ),
     }
 ]
 
