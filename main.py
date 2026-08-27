@@ -5,6 +5,7 @@ import ctypes
 import pyautogui
 
 from comtypes import CLSCTX_ALL
+from pathlib import Path
 from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
@@ -129,12 +130,38 @@ def mute_volume():
         return f"Ошибка при переключении звука: {str(e)}"
 
 
+def collapse_win():
+    try:
+        pyautogui.hotkey('win', 'd')
+        return "Все окна свернуты/развернуты"
+    except Exception as e:
+        return f"Ошибка при свравчивании/разворачивание окон {str(e)}"
+
+
+def take_screen():
+    try:
+        SCREENS_DIR = Path(__file__).resolve().parent / "screens"
+        SCREENS_DIR.mkdir(parents=True, exist_ok=True)
+
+        file_name = f"screen_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        file_path = SCREENS_DIR / file_name
+
+        screen = pyautogui.screenshot()
+        screen.save(file_path)
+        return f"Скриншот успешно сохранен в: {SCREENS_DIR}"
+
+    except Exception as e:
+        return f"Ошибка при создании скриншота: {str(e)}"
+
+
 available_tools = {
     "get_time": get_time,
     "get_date": get_date,
     "open_app": open_app,
     "set_volume": set_volume,
-    "mute_volume": mute_volume
+    "mute_volume": mute_volume,
+    "collapse_win": collapse_win,
+    "take_screen": take_screen
 }
 
 
@@ -160,6 +187,21 @@ tools_discription = [
             'description': 'Полностью выключает или включает звук',
         },
     },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'collapse_win',
+            'description': 'Сворачивает или разворачивает все окна',
+        },
+    },
+    {
+        'type': 'function',
+        'function': {
+            'name': 'take_screen',
+            'description': 'Делает скриншот экрана и сохраняет в папку',
+        },
+    },
+
     {
         'type': 'function',
         'function': {
