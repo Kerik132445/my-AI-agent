@@ -5,11 +5,11 @@ import ctypes
 import pyautogui
 import time
 import webbrowser
+import json
 
 from comtypes import CLSCTX_ALL
 from pathlib import Path
 from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from ollama import chat
 from datetime import datetime, date
@@ -30,7 +30,6 @@ common_start = os.path.expandvars(
     r'%ALLUSERSPROFILE%\Microsoft\Windows\Start Menu')
 
 search_paths = [user_start, common_start]
-
 all_lnks = []
 
 for base_path in search_paths:
@@ -47,17 +46,14 @@ for one_app in all_lnks:
 
 
 def get_volume():
-    # Инициализируем COM-поток, чтобы Windows не блокировала доступ
     try:
+        import comtypes
         comtypes.CoInitialize()
     except Exception:
         pass
 
-    # Получаем именно АКТИВНОЕ устройство вывода (по умолчанию)
     enumerator = AudioUtilities.GetDeviceEnumerator()
-    # 0 = eRender (вывод), 0 = eConsole (устройство по умолчанию)
     device = enumerator.GetDefaultAudioEndpoint(0, 0)
-
     interface = device.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
     volume = cast(interface, POINTER(IAudioEndpointVolume))
     return volume
@@ -72,10 +68,10 @@ def set_volume(level: int):
         target_level = max(0, min(100, level)) / 100.0
         volume.SetMasterVolumeLevelScalar(target_level, None)
 
-        return f"Громкость установленна на {level}%."
+        return f"Громкость установлена на {level}%."
 
     except Exception as e:
-        return f"При установке громкости произошла ошибка {str(e)}"
+        return f"При установке громкости произошла ошибка: {str(e)}"
 
 
 def get_time():
@@ -87,19 +83,16 @@ def get_date():
 
 
 def open_app(name_app: str):
-    # 1. Приводим ввод к нижнему регистру и проверяем локальные алиасы
     clean_input = name_app.strip().lower()
     search_query = APP_ALIASES.get(clean_input, clean_input)
 
     target_path = None
 
-    # 2. Поиск по частичному вхождению (in)
     for app_name, app_path in clear_lnks.items():
         if search_query in app_name:
             target_path = app_path
             break
 
-    # 3. Нечеткий поиск через difflib, если по 'in' не нашлось
     if not target_path:
         matches = difflib.get_close_matches(
             search_query, clear_lnks.keys(), n=1, cutoff=0.5
@@ -108,11 +101,9 @@ def open_app(name_app: str):
             matched_key = matches[0]
             target_path = clear_lnks[matched_key]
 
-    # 4. Проверка: если путь так и не найден
     if not target_path:
         return f"Приложение '{name_app}' не найдено на ПК."
 
-    # 5. Безопасный запуск
     try:
         os.startfile(target_path)
         return f"Приложение '{name_app}' успешно запущено."
@@ -121,7 +112,6 @@ def open_app(name_app: str):
 
 
 def mute_volume():
-    """Включает или выключает звук полностью (Mute)."""
     try:
         volume = get_volume()
         current_mute = volume.GetMute()
@@ -134,21 +124,17 @@ def mute_volume():
 
 def collapse_win():
     try:
-        # VK_LWIN = 0x5B, VK_D = 0x44
-        # Зажимаем Win
         ctypes.windll.user32.keybd_event(0x5B, 0, 0, 0)
-        # Нажимаем D
         ctypes.windll.user32.keybd_event(0x44, 0, 0, 0)
         time.sleep(0.05)
-        # Отпускаем D и Win
         ctypes.windll.user32.keybd_event(0x44, 0, 2, 0)
         ctypes.windll.user32.keybd_event(0x5B, 0, 2, 0)
 
         time.sleep(0.4)
 
-        return "Все окна свернуты/развернуты"
+        return "Окна свернуты/развернуты (Win+D)"
     except Exception as e:
-        return f"Ошибка при свравчивании/разворачивание окон {str(e)}"
+        return f"Ошибка при сворачивании/разворачивании окон: {str(e)}"
 
 
 def take_screen():
@@ -185,10 +171,10 @@ def lounch_steam_section(section: str):
 
         webbrowser.open(uri)
 
-        return f"Раздел Steam {section} открыт"
+        return f"Раздел Steam '{section}' открыт"
 
     except Exception as e:
-        return f"Ошибка при откытии Steam: {str(e)}"
+        return f"Ошибка при открытии Steam: {str(e)}"
 
 
 STEAM_GAMES = {
@@ -390,7 +376,7 @@ def launch_steam_game(game_name: str):
             clean_name, clean_name if clean_name.isdigit() else None)
 
         if not app_id:
-            return f"Игра {game_name} не была найдена в библиотеке Steam"
+            return f"Игра '{game_name}' не найдена в словаре Steam."
 
         webbrowser.open(f"steam://rungameid/{app_id}")
         return f"Запуск игры '{game_name}' (AppID: {app_id}) через Steam..."
@@ -448,18 +434,17 @@ tools_discription = [
             'description': 'Делает скриншот экрана и сохраняет в папку',
         },
     },
-
     {
         'type': 'function',
         'function': {
             'name': 'open_app',
-            'description': 'Открывает приложение по их обычным названиям на русском и английском языке',
+            'description': 'Открывает приложение по имени',
             'parameters': {
                 'type': 'object',
                 'properties': {
                     'name_app': {
                         'type': 'string',
-                        'description': 'если пользователь написал название на русском языке, например "дискорд", то нужно перевести это название на английский язык, "discord"'
+                        'description': 'Название приложения (например, "discord", "telegram", "notepad")'
                     }
                 },
                 'required': ['name_app']
@@ -470,13 +455,13 @@ tools_discription = [
         'type': 'function',
         'function': {
             'name': 'set_volume',
-            'description': 'изменяет громкость звука на нужный уровень',
+            'description': 'Изменяет громкость звука на нужный уровень',
             'parameters': {
                 'type': 'object',
                 'properties': {
                     'level': {
                         'type': 'integer',
-                        'description': 'Принимает число от 1 до 100 для изменения уровня громкости'
+                        'description': 'Число от 0 до 100 для уровня громкости'
                     }
                 },
                 'required': ['level']
@@ -487,13 +472,13 @@ tools_discription = [
         'type': 'function',
         'function': {
             'name': 'launch_steam_game',
-            'description': 'Запускает игру по ее названию',
+            'description': 'Запускает игру в Steam по ее названию',
             'parameters': {
                 'type': 'object',
                 'properties': {
-                    'level': {
+                    'game_name': {
                         'type': 'string',
-                        'description': 'Принимает название игры которое нужно запустить'
+                        'description': 'Название игры'
                     }
                 },
                 'required': ['game_name']
@@ -504,13 +489,13 @@ tools_discription = [
         'type': 'function',
         'function': {
             'name': 'lounch_steam_section',
-            'description': 'Открывает нужную вкладку в Steam: библиотека, друзья, магазин, настройки.',
+            'description': 'Открывает вкладку в Steam (библиотека, друзья, магазин, настройки)',
             'parameters': {
                 'type': 'object',
                 'properties': {
-                    'level': {
+                    'section': {
                         'type': 'string',
-                        'description': 'Название раздела: "библиотека", "друзья", "магазин", "настройки"'
+                        'description': 'Название раздела (библиотека, друзья, магазин, настройки)'
                     }
                 },
                 'required': ['section']
@@ -522,21 +507,19 @@ tools_discription = [
 messages = [
     {
         'role': 'system',
-        'content': ("Ты — Гвен, полезный ИИ-ассистент для управления ПК."
-                    "Если пользователь просит выполнить несколько действий подряд (например, 'сверни окна и открой стим'), ты ДОЛЖНА вызвать все соответствующие функции (tools) последовательно. "
-                    "Отвечай кратко и по делу."
-                    "КРИТИЧЕСКОЕ ПРАВИЛО: Если пользователь просит выполнить 2 и более действий "
-                    "(например: 'сверни окна и открой стим'), ты ОБЯЗАНА вернуть сразу список вызовов функций.\n"
-                    "Пример ответа:\n"
-                    '[{"name": "collapse_win", "arguments": {}}, {"name": "open_app", "arguments": {"name_app": "steam"}}]'
-                    ),
+        'content': (
+            "Ты — Гвен, полезный ИИ-ассистент для управления ПК. "
+            "Используй доступные инструменты (tools) для выполнения команд пользователя. "
+            "Если пользователь просит сделать несколько действий, задействуй нужные инструменты последовательно. "
+            "Отвечай кратко и емко."
+        ),
     }
 ]
 
 print("Гвен запущена! (Напиши 'выход' или 'exit' для завершения)\n")
 
 while True:
-    user_input = input("Я: ".strip())
+    user_input = input("Я: ").strip()
 
     if not user_input:
         continue
@@ -545,12 +528,7 @@ while True:
         print("Гвен: До связи!")
         break
 
-    messages.append(
-        {
-            'role': 'user',
-            'content': user_input
-        }
-    )
+    messages.append({'role': 'user', 'content': user_input})
 
     response = chat(
         model='qwen3:8b',
@@ -560,15 +538,33 @@ while True:
 
     messages.append(response.message)
 
-    if response.message.tool_calls:
-        for tool_call in response.message.tool_calls:
-            tool_name = tool_call.function.name  # Допустим там находится "get_time"
+    # Достаем штатные вызовы
+    tool_calls = response.message.tool_calls or []
+
+    # Фоллбек: если модель прислала JSON текстом
+    if not tool_calls and response.message.content and response.message.content.strip().startswith('['):
+        try:
+            raw_tools = json.loads(response.message.content.strip())
+            for t in raw_tools:
+                class ToolCall:
+                    pass
+                tc = ToolCall()
+                tc.function = ToolCall()
+                tc.function.name = t.get("name")
+                tc.function.arguments = t.get("arguments", {})
+                tool_calls.append(tc)
+        except Exception:
+            pass
+
+    if tool_calls:
+        for tool_call in tool_calls:
+            tool_name = tool_call.function.name
             arguments = tool_call.function.arguments
 
             if tool_name in available_tools:
                 function = available_tools[tool_name]
+                # Вызываем функцию с распаковкой аргументов
                 result = function(**arguments)
-
             else:
                 result = f"Ошибка: инструмент '{tool_name}' не найден."
 
@@ -576,14 +572,14 @@ while True:
                 'role': 'tool',
                 'content': str(result),
             })
-        # Повторный запрос к Ollama ПОСЛЕ выполнения всех тулов
+
+        # Финальный ответ после выполнения всех вызовов
         final_response = chat(
             model='qwen3:8b',
             messages=messages,
         )
-
         messages.append(final_response.message)
         print(f"Гвен: {final_response.message.content}\n")
 
     else:
-        print(f"Гвен: {response.message.content}")
+        print(f"Гвен: {response.message.content}\n")
