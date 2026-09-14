@@ -1,0 +1,90 @@
+# =========================
+
+# Python
+
+# =========================
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+
+venv/
+.venv/
+env/
+ENV/
+
+# =========================
+
+# Environment / secrets
+
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+
+# IDE
+
+# =========================
+
+.vscode/*
+!.vscode/settings.json
+
+.idea/
+
+# =========================
+
+# Logs
+
+# =========================
+
+*.log
+logs/
+
+# =========================
+
+# Generated files
+
+# =========================
+
+screens/
+*.tmp
+*.temp
+
+# =========================
+
+# OS files
+
+# =========================
+
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# =========================
+
+# Test / cache
+
+# =========================
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =========================
+
+# Local data
+
+# =========================
+
+data/*
+!data/.gitkeep
+
+memory/*
+!memory/.gitkeep
