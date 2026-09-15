@@ -187,7 +187,7 @@ STEAM_GAMES = {
     "who's your daddy?!": "427730",
     "wild terra 2: new lands": "1134700",
     "world crafter td": "3098890",
-    "zombie gunship survival": "1597480",
+    "zombie gunship survival": "1597480"
 }
 
 
