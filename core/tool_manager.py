@@ -5,10 +5,13 @@ from tools.system import (
     mute_volume,
     collapse_win,
 )
+from tools.steam_api import get_owned_games
 
 from tools.applications import open_app
 
 from tools.screen import take_screen
+
+from memory.memory import add_fact, get_facts
 
 from tools.steam import (
     launch_steam_section,
@@ -25,6 +28,9 @@ TOOLS = {
     "take_screen": take_screen,
     "launch_steam_section": launch_steam_section,
     "launch_steam_game": launch_steam_game,
+    "get_owned_games": get_owned_games,
+    "add_fact": add_fact,
+    "get_facts": get_facts
 }
 
 
@@ -40,6 +46,19 @@ TOOL_SCHEMAS = [
                 "required": [],
             },
         },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "get_facts",
+            "description": "Получить сохранённые долгосрочные факты о пользователе из памяти.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        }
     },
 
     {
@@ -87,6 +106,24 @@ TOOL_SCHEMAS = [
                     },
                 },
                 "required": ["level"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "add_fact",
+            "description": "Сохранить важный долгосрочный факт о пользователе в память.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "fact": {
+                        "type": "string",
+                        "description": "Факт о пользователе, который нужно сохранить.",
+                    },
+                },
+                "required": ["fact"],
             },
         },
     },
@@ -165,6 +202,19 @@ TOOL_SCHEMAS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_owned_games",
+            "description": "Получить список игр пользователя в Steam.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+
 ]
 
 
@@ -175,6 +225,7 @@ def execute_tool(tool_name: str, arguments: dict):
         return f"Инструмент '{tool_name}' не найден."
 
     try:
+
         return tool(**arguments)
 
     except Exception as e:
