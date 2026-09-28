@@ -13,6 +13,8 @@ class Agent:
                 "content": SYSTEM_PROMPT,
             }
         ]
+    max_iterations = 20
+    iterations = 0
 
     def ask(self, user_message: str):
         self.messages.append({
@@ -20,43 +22,39 @@ class Agent:
             "content": user_message,
         })
 
-        response = send_message(
-            self.messages,
-            tools=TOOL_SCHEMAS,
-        )
-
-        debug(
-            f"Ollama ответила. Tool calls: {bool(response.message.tool_calls)}")
-
-        self.messages.append(response.message)
-
-        if not response.message.tool_calls:
-            return response.message.content
-
-        for tool_call in response.message.tool_calls:
-            tool_name = tool_call.function.name
-            arguments = tool_call.function.arguments
-
-            debug(f"Выбран инструмент: {tool_name}")
-            debug(f"Аргументы: {arguments}")
-
-            result = execute_tool(
-                tool_name,
-                arguments,
+        while self.iterations < self.max_iterations:
+            self.iterations += 1
+            response = send_message(
+                self.messages,
+                tools=TOOL_SCHEMAS,
             )
 
-            debug(f"Результат инструмента: {result}")
+            debug(
+                f"Ollama ответила. Tool calls: "
+                f"{bool(response.message.tool_calls)}"
+            )
 
-            self.messages.append({
-                "role": "tool",
-                "content": str(result),
-            })
+            self.messages.append(response.message)
 
-        final_response = send_message(
-            self.messages,
-        )
+            if not response.message.tool_calls:
+                return response.message.content
 
-        debug(f"Финальный ответ Ollama: {final_response.message.content}")
-        self.messages.append(final_response.message)
+            for tool_call in response.message.tool_calls:
+                tool_name = tool_call.function.name
+                arguments = tool_call.function.arguments
 
-        return final_response.message.content
+                debug(f"Выбран инструмент: {tool_name}")
+                debug(f"Аргументы: {arguments}")
+
+                result = execute_tool(
+                    tool_name,
+                    arguments,
+                )
+
+                debug(f"Результат инструмента: {result}")
+
+                self.messages.append({
+                    "role": "tool",
+                    "content": str(result),
+                })
+        return "Я не смогла завершить выполнение команды."

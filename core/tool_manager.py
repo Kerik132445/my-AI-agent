@@ -11,7 +11,14 @@ from tools.applications import open_app
 
 from tools.screen import take_screen
 
-from memory.memory import add_fact, get_facts
+from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file
+
+from memory.memory import (
+    add_fact,
+    get_facts,
+    delete_fact,
+    update_fact,
+)
 
 from tools.steam import (
     launch_steam_section,
@@ -30,7 +37,15 @@ TOOLS = {
     "launch_steam_game": launch_steam_game,
     "get_owned_games": get_owned_games,
     "add_fact": add_fact,
-    "get_facts": get_facts
+    "get_facts": get_facts,
+    "delete_fact": delete_fact,
+    "update_fact": update_fact,
+    "list_files": list_files,
+    "read_file": read_file,
+    "open_file": open_file,
+    "create_file": create_file,
+    "copy_file": copy_file,
+    "move_file": move_file,
 }
 
 
@@ -171,7 +186,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "launch_steam_section",
-            "description": "Открыть раздел Steam.",
+            "description": "Открыть раздел интерфейса Steam, например библиотеку, магазин, друзья. Не используй этот инструмент для запуска игр.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -189,13 +204,13 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "launch_steam_game",
-            "description": "Запустить игру через Steam.",
+            "description": "Запустить конкретную игру через Steam. Используй этот инструмент, если пользователь говорит название игры, например Project Zomboid или проджект зомбоид, Squad или сквад, CS2 или кс 2. Не используй для открытия разделов Steam.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "game_name": {
                         "type": "string",
-                        "description": "Название игры или Steam AppID.",
+                        "description": "Название конкретной игры, например сквад(Squad), проджект зомбоид(Project Zomboid) или майнакрафт(Minecraft), либо её Steam AppID.",
                     },
                 },
                 "required": ["game_name"],
@@ -211,6 +226,166 @@ TOOL_SCHEMAS = [
                 "type": "object",
                 "properties": {},
                 "required": [],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_fact",
+            "description": "Удалить конкретный факт из долговременной памяти пользователя.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "fact": {
+                        "type": "string",
+                        "description": "Точный факт, который нужно удалить.",
+                    },
+                },
+                "required": ["fact"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "list_files",
+            "description": "Показать список файлов и папок внутри указанной директории. НЕ читает содержимое файлов. Используй, когда пользователь просит показать, какие файлы находятся в папке.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name_dir": {
+                        "type": "string",
+                        "description": "Название папки",
+                    },
+                },
+                "required": ["name_dir"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Прочитать содержимое конкретного текстового файла. Используй, когда пользователь просит прочитать, показать содержимое или посмотреть код конкретного файла. НЕ используй для получения списка файлов в папке.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь к текстовому файлу",
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "open_file",
+            "description": "Открыть файл",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь к файлу",
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "create_file",
+            "description": "Создать файл",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь, по которому нужно создать файл",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Содержимое нового файла",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "copy_file",
+            "description": "Скопировать файл",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Файл, который нужно скопировать",
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "место, куда нужно скопировать",
+                    },
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "move_file",
+            "description": "Переместить файл из одного места в другое",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "source": {
+                        "type": "string",
+                        "description": "Файл, который нужно переместить",
+                    },
+                    "destination": {
+                        "type": "string",
+                        "description": "место, куда нужно переместить",
+                    },
+                },
+                "required": ["source", "destination"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "update_fact",
+            "description": "Заменить существующий факт пользователя на новый.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "old_fact": {
+                        "type": "string",
+                        "description": "Старый факт, который нужно заменить.",
+                    },
+                    "new_fact": {
+                        "type": "string",
+                        "description": "Новый факт, который должен его заменить.",
+                    },
+                },
+                "required": ["old_fact", "new_fact"],
             },
         },
     },

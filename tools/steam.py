@@ -1,4 +1,5 @@
 import webbrowser
+from tools.steam_api import get_owned_games
 
 STEAM_GAMES = {
     "100% orange juice": "282800",
@@ -212,7 +213,7 @@ def launch_steam_section(section: str):
 
         webbrowser.open(uri)
 
-        return f"Раздел Steam '{section}' открыт"
+        return f"Раздел Steam '{section}' открыт."
 
     except Exception as e:
         return f"Ошибка при открытии Steam: {str(e)}"
@@ -228,7 +229,14 @@ def launch_steam_game(game_name: str):
         )
 
         if not app_id:
-            return f"Игра '{game_name}' не найдена в словаре Steam."
+            steam_games = get_owned_games()
+            if clean_name in steam_games:
+                app_id = steam_games[clean_name]
+                webbrowser.open(
+                    f"steam://rungameid/{app_id}"
+                )
+                return f"Игра {clean_name} Найдена и запущена"
+            return f"Игра {clean_name} не найдена."
 
         webbrowser.open(
             f"steam://rungameid/{app_id}"

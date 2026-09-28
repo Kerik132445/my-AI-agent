@@ -43,11 +43,13 @@ def set_volume(level: int):
 
 
 def get_time():
-    return datetime.now().strftime("%H:%M:%S")
+    current_time = datetime.now().strftime("%H:%M:%S")
+    return f"Сейчас: {current_time}."
 
 
 def get_date():
-    return date.today().strftime("%d.%m.%Y")
+    current_date = date.today().strftime("%d.%m.%Y")
+    return f"Сегодня {current_date}."
 
 
 def mute_volume():
@@ -77,7 +79,7 @@ def collapse_win():
 
         time.sleep(0.4)
 
-        return "Окна свернуты/развернуты (Win+D)"
+        return "Окна успешно свернуты или восстановлены с помощью Win+D."
 
     except Exception as e:
         return f"Ошибка при сворачивании/разворачивании окон: {str(e)}"

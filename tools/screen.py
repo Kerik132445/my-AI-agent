@@ -15,7 +15,7 @@ def take_screen():
         screen = pyautogui.screenshot()
         screen.save(file_path)
 
-        return f"Скриншот успешно сохранен в: {screens_dir}"
+        return f"Скриншот успешно сохранен в: {file_path}"
 
     except Exception as e:
         return f"Ошибка при создании скриншота: {str(e)}"
