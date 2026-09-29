@@ -50,3 +50,8 @@ def find_files(name, directory=None):
                     full_path = os.path.join(dirpath, filename)
                     results.append(full_path)
     return results
+
+
+def delete_file(path):
+    os.remove(path)
+    return f"Файл {path} был успешно удален"

@@ -11,7 +11,7 @@ from tools.applications import open_app
 
 from tools.screen import take_screen
 
-from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file, find_files
+from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file, find_files, delete_file
 
 from memory.memory import (
     add_fact,
@@ -47,6 +47,7 @@ TOOLS = {
     "copy_file": copy_file,
     "move_file": move_file,
     "find_files": find_files,
+    "delete_file": delete_file,
 }
 
 
@@ -218,6 +219,8 @@ TOOL_SCHEMAS = [
             },
         },
     },
+
+
     {
         "type": "function",
         "function": {
@@ -290,6 +293,24 @@ TOOL_SCHEMAS = [
         "function": {
             "name": "open_file",
             "description": "Открыть файл",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь к файлу",
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Удалить файл",
             "parameters": {
                 "type": "object",
                 "properties": {
