@@ -33,3 +33,20 @@ def copy_file(source, destination):
 def move_file(source, destination):
     shutil.move(source, destination)
     return f"файл {source} был успешно перемещен в {destination}"
+
+
+def find_files(name, directory=None):
+    results = []
+    if not directory:
+        for dirpath, dirnames, filenames in os.walk('C:/', topdown=True):
+            for filename in filenames:
+                if filename == name:
+                    full_path = os.path.join(dirpath, filename)
+                    results.append(full_path)
+    else:
+        for dirpath, dirnames, filenames in os.walk(directory, topdown=True):
+            for filename in filenames:
+                if filename == name:
+                    full_path = os.path.join(dirpath, filename)
+                    results.append(full_path)
+    return results

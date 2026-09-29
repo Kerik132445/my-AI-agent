@@ -11,7 +11,7 @@ from tools.applications import open_app
 
 from tools.screen import take_screen
 
-from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file
+from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file, find_files
 
 from memory.memory import (
     add_fact,
@@ -46,6 +46,7 @@ TOOLS = {
     "create_file": create_file,
     "copy_file": copy_file,
     "move_file": move_file,
+    "find_files": find_files,
 }
 
 
@@ -252,7 +253,7 @@ TOOL_SCHEMAS = [
         "type": "function",
         "function": {
             "name": "list_files",
-            "description": "Показать список файлов и папок внутри указанной директории. НЕ читает содержимое файлов. Используй, когда пользователь просит показать, какие файлы находятся в папке.",
+            "description": "Используй этот инструмент, когда пользователь хочет увидеть содержимое конкретной папки. НЕ используй для поиска конкретного файла по имени.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -298,6 +299,28 @@ TOOL_SCHEMAS = [
                     },
                 },
                 "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "find_files",
+            "description": "Используй этот инструмент, когда пользователь хочет найти конкретный файл по его имени. Можно указать папку, в которой нужно искать. НЕ используй list_files для поиска конкретного файла.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Имя файла",
+                    },
+                    "directory": {
+                        "type": "string",
+                        "description": "Папка в которой нужно искать файл",
+                    },
+                },
+                "required": ["name"],
             },
         },
     },
