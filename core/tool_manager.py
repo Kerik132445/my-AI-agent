@@ -11,7 +11,7 @@ from tools.applications import open_app
 
 from tools.screen import take_screen
 
-from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file, find_files, delete_file
+from tools.files import list_files, read_file, open_file, create_file, copy_file, move_file, find_files, delete_file, create_folder, delete_folder
 
 from memory.memory import (
     add_fact,
@@ -48,6 +48,8 @@ TOOLS = {
     "move_file": move_file,
     "find_files": find_files,
     "delete_file": delete_file,
+    "create_folder": create_folder,
+    "delete_folder": delete_folder,
 }
 
 
@@ -317,6 +319,42 @@ TOOL_SCHEMAS = [
                     "path": {
                         "type": "string",
                         "description": "Путь к файлу",
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "create_folder",
+            "description": "Создать папку по указанному пути. Используй, когда пользователь просит создать новую папку или директорию.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь к папке",
+                    },
+                },
+                "required": ["path"],
+            },
+        },
+    },
+
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_folder",
+            "description": "Удалить папку вместе со всем её содержимым, включая файлы и вложенные папки. Используй после явного подтверждения пользователя. Не нужно отдельно удалять файлы или вложенные папки перед вызовом этого инструмента.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Путь к папке",
                     },
                 },
                 "required": ["path"],
