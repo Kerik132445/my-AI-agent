@@ -2,6 +2,7 @@ import os
 import shutil
 
 WORKING_DIRECTORY = r"C:\AI Gven"
+CURRENT_DIRECTORY = WORKING_DIRECTORY
 
 
 home = os.path.expanduser("~")
@@ -113,3 +114,26 @@ def delete_folder(path):
 
     shutil.rmtree(path)
     return f"Папка {path} успешно удалена"
+
+
+def change_directory(path):
+    global CURRENT_DIRECTORY
+
+    working_path = resolve_path(path)
+
+    if os.path.isdir(working_path) is True:
+
+        CURRENT_DIRECTORY = working_path
+
+        return CURRENT_DIRECTORY
+
+    else:
+        return "Не удалось перейти в папку {working_path}"
+
+
+print(CURRENT_DIRECTORY)
+
+if __name__ == "__main__":
+    change_directory("..")
+
+    print(CURRENT_DIRECTORY)

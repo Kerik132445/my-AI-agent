@@ -423,7 +423,7 @@ TOOL_SCHEMAS = [
                         "description": "место, куда нужно скопировать",
                     },
                 },
-                "required": ["path", "content"],
+                "required": ["source", "destination"],
             },
         },
     },
