@@ -1,4 +1,6 @@
 from core.agent import Agent
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def main():

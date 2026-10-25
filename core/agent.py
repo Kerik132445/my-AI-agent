@@ -1,11 +1,15 @@
 from core.prompts import SYSTEM_PROMPT
 from core.tool_manager import TOOL_SCHEMAS, execute_tool
 from utils.logger import debug
+import uuid
 
 
 class Agent:
 
     def __init__(self, model_client=None):
+        self.max_iterations = 20
+        self.iterations = 0
+
         if model_client is None:
             from models.client_factory import get_model_client
             model_client = get_model_client()
@@ -17,8 +21,6 @@ class Agent:
                 "content": SYSTEM_PROMPT,
             }
         ]
-    max_iterations = 20
-    iterations = 0
 
     def ask(self, user_message: str):
         self.iterations = 0
@@ -39,18 +41,26 @@ class Agent:
                 f"{bool(response.tool_calls)}"
             )
 
-            self.messages.append({
+            for call in response.tool_calls:
+                if not call.call_id:
+                    call.call_id = f"call_{uuid.uuid4().hex[:8]}"
+
+            assistant_message = {
                 "role": "assistant",
                 "content": response.content or "",
-                "tool_calls": [
+            }
+
+            if response.tool_calls:
+                assistant_message["tool_calls"] = [
                     {
                         "id": call.call_id,
                         "name": call.name,
                         "arguments": call.arguments,
                     }
                     for call in response.tool_calls
-                ],
-            })
+                ]
+
+            self.messages.append(assistant_message)
 
             tool_calls = response.tool_calls
 
