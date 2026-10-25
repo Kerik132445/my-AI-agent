@@ -95,3 +95,29 @@ def send_message(messages, tools=None):
         tool_calls=tool_calls,
         raw_response=response,
     )
+
+
+def list_models():
+    """Получить список доступных моделей от провайдера."""
+    try:
+        response = client.models.list()
+        # Исключаем служебные модели безопасности prompt-guard
+        models = [
+            m.id for m in response.data
+            if "prompt-guard" not in m.id
+        ]
+        return sorted(models)
+    except Exception as e:
+        return [f"Ошибка при получении моделей: {e}"]
+
+
+def set_model(model_name: str):
+    """Сменить текущую рабочую модель."""
+    global MODEL_NAME
+    MODEL_NAME = model_name
+    return MODEL_NAME
+
+
+def get_current_model():
+    """Узнать текущую активную модель."""
+    return MODEL_NAME

@@ -1,3 +1,4 @@
+import ollama
 from ollama import chat
 from models.base_client import ModelResponse, ModelToolCall
 
@@ -63,3 +64,24 @@ def format_messages(messages):
             })
 
     return formatted
+
+
+def list_models():
+    """Получить список установленных локальных моделей Ollama."""
+    try:
+        response = ollama.list()
+        return [m.model for m in response.models]
+    except Exception as e:
+        return [f"Ошибка при получении моделей Ollama: {e}"]
+
+
+def set_model(model_name: str):
+    """Сменить текущую локальную модель."""
+    global MODEL_NAME
+    MODEL_NAME = model_name
+    return MODEL_NAME
+
+
+def get_current_model():
+    """Узнать текущую локальную модель."""
+    return MODEL_NAME
